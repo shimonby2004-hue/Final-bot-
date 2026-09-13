@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Setting {
+  id        Int      @id @default(1)
+  mode      String   @default("normal") // slow | normal | boost
+  aiApiKey  String?
+  aiModel   String   @default("gpt-4o-mini")
+  updatedAt DateTime @updatedAt
+}
+
+model Target {
+  id        String   @id @default(cuid())
+  chatId    String   @unique
+  title     String?
+  type      String?  // channel | group | supergroup
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model CustomContent {
+  id        String   @id @default(cuid())
+  text      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  targetId    String
+  target      Target   @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  messageId   Int
+  content     String?
+  sourceType  String?  // custom | catalog
+  createdAt   DateTime @default(now())
+
+  @@index([targetId, createdAt])
+}
+
+model PostLog {
+  id        String   @id @default(cuid())
+  action    String   // published | deleted | error | mode_change
+  details   String?
+  createdAt DateTime @default(now())
+}
